@@ -48,29 +48,35 @@ def login_view(request):
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user_role = request.POST.get('user_role')
+            remember_me = request.POST.get('remember_me') == 'on'
             
             user = authenticate(username=username, password=password)
             if user is not None:
                 # Check if user role matches their actual role
                 if user_role == 'admin' and user.is_staff:
                     login(request, user)
-                    messages.success(request, f'Welcome back, {username}!')
+                    messages.success(request, 'You have been logged out successfully.')
+                    if not remember_me:
+                        request.session.set_expiry(0)  # Session expires when browser closes
                     return redirect('school_app:dashboard')
                 elif user_role == 'student' and not user.is_staff:
                     # Check if student profile exists
                     try:
                         student = Student.objects.get(user=user)
                         login(request, user)
-                        messages.success(request, f'Welcome back, {username}!')
+                        messages.success(request, 'You have been logged out successfully.')
+                        if not remember_me:
+                            request.session.set_expiry(0)  # Session expires when browser closes
                         return redirect('school_app:student_dashboard')
                     except Student.DoesNotExist:
                         messages.error(request, 'No student profile found for this account.')
                 else:
-                    messages.error(request, 'Invalid role selected for this account.')
+                    messages.error(request, 'Please select the correct role for your account.')
             else:
                 messages.error(request, 'Invalid username or password.')
     else:
         form = AuthenticationForm()
+        
     return render(request, 'school_app/login.html', {'form': form})
 
 def logout_view(request):
