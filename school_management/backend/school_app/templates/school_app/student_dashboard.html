@@ -1,0 +1,237 @@
+{% extends 'school_app/base.html' %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css' rel='stylesheet' />
+<style>
+    .dashboard-card {
+        @apply bg-white rounded-xl shadow-md p-6 transition-all duration-200;
+    }
+    .quick-action-button {
+        @apply flex items-center p-4 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+    }
+    .stat-badge {
+        @apply px-3 py-1 rounded-full text-sm font-medium;
+    }
+    .progress-bar {
+        @apply h-2 rounded-full bg-gray-200 overflow-hidden;
+    }
+    .progress-value {
+        @apply h-full rounded-full transition-all duration-300;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    {% include 'school_app/sidebar.html' %}
+
+    <div class="flex-1 min-w-0">
+        <div class="p-6 md:p-8 lg:p-10 space-y-8">
+            <!-- Personal Information Section -->
+            <div class="dashboard-card">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Welcome, {{ student.name }}</h1>
+                        <p class="text-gray-600">Student ID: {{ student.id }}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="stat-badge {% if student.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ student.status|title }}
+                        </span>
+                        <p class="text-sm text-gray-600 mt-1">Academic Standing: Good</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="#" class="quick-action-button">
+                    <i class="fas fa-book-open mr-3"></i>
+                    <span>Course Materials</span>
+                </a>
+                <a href="#" class="quick-action-button">
+                    <i class="fas fa-upload mr-3"></i>
+                    <span>Submit Assignment</span>
+                </a>
+                <a href="#" class="quick-action-button">
+                    <i class="fas fa-user-tie mr-3"></i>
+                    <span>Contact Teachers</span>
+                </a>
+                <a href="#" class="quick-action-button">
+                    <i class="fas fa-calendar-check mr-3"></i>
+                    <span>View Attendance</span>
+                </a>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Course Overview -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold mb-4">Current Courses</h2>
+                        <div class="space-y-4">
+                            {% for enrollment in enrollments %}
+                            <div class="border rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-medium text-gray-900">{{ enrollment.course.name }}</h3>
+                                    <span class="text-sm text-gray-600">{{ enrollment.course.teacher.name }}</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Progress</span>
+                                        <span class="font-medium">75%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value bg-blue-500" style="width: 75%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Current Grade</span>
+                                        <span class="font-medium">A-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Academic Performance -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold mb-4">Academic Performance</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600">Current GPA</p>
+                                <p class="text-2xl font-bold text-gray-900">3.8</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600">Attendance Rate</p>
+                                <p class="text-2xl font-bold text-gray-900">95%</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600">Credits Completed</p>
+                                <p class="text-2xl font-bold text-gray-900">45/120</p>
+                            </div>
+                        </div>
+                        <canvas id="gradeDistribution" class="w-full h-64"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Upcoming Deadlines -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold mb-4">Upcoming Deadlines</h2>
+                        <div class="space-y-3">
+                            {% for deadline in upcoming_deadlines %}
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <div class="flex-shrink-0 w-2 h-2 rounded-full {% if deadline.type == 'assignment' %}bg-blue-500{% elif deadline.type == 'exam' %}bg-red-500{% else %}bg-yellow-500{% endif %} mr-3"></div>
+                                <div class="flex-grow">
+                                    <p class="text-sm font-medium text-gray-900">{{ deadline.title }}</p>
+                                    <p class="text-xs text-gray-600">{{ deadline.course }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-gray-900">{{ deadline.date }}</p>
+                                    <p class="text-xs text-gray-600">{{ deadline.time }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Weekly Schedule -->
+                    <div class="dashboard-card">
+                        <h2 class="text-xl font-semibold mb-4">Weekly Schedule</h2>
+                        <div class="space-y-3">
+                            {% for class in weekly_schedule %}
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <div class="flex-shrink-0 w-16 text-center">
+                                    <p class="text-sm font-medium text-gray-900">{{ class.day }}</p>
+                                    <p class="text-xs text-gray-600">{{ class.time }}</p>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ class.course }}</p>
+                                    <p class="text-xs text-gray-600">{{ class.room }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="dashboard-card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Notifications</h2>
+                            <span class="stat-badge bg-red-100 text-red-800">{{ notifications|length }} New</span>
+                        </div>
+                        <div class="space-y-3">
+                            {% for notification in notifications %}
+                            <div class="p-3 {% if not notification.is_read %}bg-blue-50{% else %}bg-gray-50{% endif %} rounded-lg">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas {% if notification.type == 'assignment' %}fa-book{% elif notification.type == 'grade' %}fa-star{% else %}fa-bell{% endif %} text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                        <p class="text-xs text-gray-600">{{ notification.time_ago }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeDistribution');
+    if (gradeCtx) {
+        new Chart(gradeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['A', 'B', 'C', 'D', 'F'],
+                datasets: [{
+                    label: 'Grade Distribution',
+                    data: [8, 6, 4, 2, 1],
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Grade Distribution'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Courses'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

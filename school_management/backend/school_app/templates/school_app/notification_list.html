@@ -1,0 +1,91 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-bold">Notifications</h1>
+                    <div class="flex items-center space-x-4">
+                        {% if unread_count > 0 %}
+                        <a href="?mark_read=true" class="text-blue-500 hover:text-blue-700">
+                            Mark all as read
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'school_app:notification_settings' %}" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-cog"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                    {% for notification in notifications %}
+                    <div class="border-b last:border-b-0 {% if not notification.is_read %}bg-blue-50{% endif %} hover:bg-gray-50">
+                        <div class="p-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    {% if notification.type == 'FEE_DUE' %}
+                                    <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                        <i class="fas fa-dollar-sign text-red-500"></i>
+                                    </div>
+                                    {% elif notification.type == 'ATTENDANCE' %}
+                                    <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                        <i class="fas fa-calendar-check text-green-500"></i>
+                                    </div>
+                                    {% elif notification.type == 'ANNOUNCEMENT' %}
+                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <i class="fas fa-bullhorn text-blue-500"></i>
+                                    </div>
+                                    {% elif notification.type == 'MESSAGE' %}
+                                    <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <i class="fas fa-envelope text-purple-500"></i>
+                                    </div>
+                                    {% elif notification.type == 'GRADE' %}
+                                    <div class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                        <i class="fas fa-star text-yellow-500"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <i class="fas fa-bell text-gray-500"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                        <p class="text-sm text-gray-500">{{ notification.created_at|timesince }} ago</p>
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-600">{{ notification.message }}</p>
+                                    {% if notification.reference_type %}
+                                    <div class="mt-2">
+                                        {% if notification.reference_type == 'Announcement' %}
+                                        <a href="{% url 'school_app:announcement_list' %}" class="text-sm text-blue-500 hover:text-blue-700">
+                                            View Announcement
+                                        </a>
+                                        {% elif notification.reference_type == 'ChatMessage' %}
+                                        <a href="{% url 'school_app:chat_room' notification.reference_id %}" class="text-sm text-blue-500 hover:text-blue-700">
+                                            View Message
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-6 text-center text-gray-500">
+                        No notifications yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

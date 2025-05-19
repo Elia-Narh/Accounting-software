@@ -1,0 +1,994 @@
+{% extends 'school_app/base.html' %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css' rel='stylesheet' />
+<style>
+    .calendar-widget {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+    }
+    .calendar-widget .fc {
+        max-height: 450px;
+        margin-top: 1rem;
+    }
+    .upcoming-events {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+    }
+    .event-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s;
+        margin-bottom: 0.5rem;
+    }
+    .event-item:hover {
+        background-color: #f9fafb;
+    }
+    .event-item:last-child {
+        border-bottom: none;
+    }
+    .event-dot {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 9999px;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    .event-dot.assignment { background-color: #ff9f89; }
+    .event-dot.exam { background-color: #ffd700; }
+    .event-dot.conference { background-color: #3788d8; }
+    .event-dot.meeting { background-color: #71c7ec; }
+    .event-dot.activity { background-color: #98fb98; }
+    .event-date {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+    .event-content {
+        flex-grow: 1;
+        margin: 0 0.75rem;
+        min-width: 0;
+    }
+    .event-content div {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #1f2937;
+        font-weight: 500;
+    }
+    .event-content small {
+        display: block;
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    .dashboard-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        transition: all 0.2s;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        transition: all 0.2s;
+    }
+    .chart-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        transition: all 0.2s;
+    }
+    .main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
+    }
+    @media (min-width: 1280px) {
+        .main-grid {
+            grid-template-columns: minmax(0, 1fr) 380px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 min-w-0">
+        <div class="p-6 md:p-8 lg:p-10">
+            <!-- Welcome Section -->
+            <div class="dashboard-card mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                       
+                        <p class="mt-2 text-gray-600">Here's what's happening in your school today</p>
+                    </div>
+                    <div class="relative">
+                        <!-- Notifications Dropdown -->
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg z-50">
+                            <div class="p-4 border-b">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-lg font-semibold">Notifications</h3>
+                                    <a href="{% url 'school_app:notification_list' %}" class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+                                </div>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                {% for notification in recent_notifications %}
+                                <div class="p-4 border-b hover:bg-gray-50 {% if not notification.is_read %}bg-blue-50{% endif %}">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0">
+                                            {% if notification.type == 'FEE_DUE' %}
+                                            <i class="fas fa-dollar-sign text-red-500"></i>
+                                            {% elif notification.type == 'ATTENDANCE' %}
+                                            <i class="fas fa-calendar-check text-green-500"></i>
+                                            {% elif notification.type == 'ANNOUNCEMENT' %}
+                                            <i class="fas fa-bullhorn text-blue-500"></i>
+                                            {% elif notification.type == 'MESSAGE' %}
+                                            <i class="fas fa-envelope text-purple-500"></i>
+                                            {% else %}
+                                            <i class="fas fa-bell text-gray-500"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                            <p class="text-sm text-gray-500">{{ notification.message }}</p>
+                                            <p class="text-xs text-gray-400 mt-1">{{ notification.created_at|timesince }} ago</p>
+                                        </div>
+                                    </div>
+        </div>
+                                {% empty %}
+                                <div class="p-4 text-center text-gray-500">
+                                    No new notifications
+        </div>
+                        {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="main-grid">
+                <!-- Left Column (Main Content) -->
+                <div class="space-y-8">
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <a href="{% url 'school_app:student_create' %}" 
+                            class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-user-graduate text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold">Add Student</h3>
+                                    <p class="text-sm opacity-90">Register a new student</p>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'school_app:teacher_create' %}" 
+                            class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-chalkboard-teacher text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold">Add Teacher</h3>
+                                    <p class="text-sm opacity-90">Register a new teacher</p>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'school_app:course_create' %}" 
+                            class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-book text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold">Add Course</h3>
+                                    <p class="text-sm opacity-90">Create a new course</p>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'school_app:announcement_create' %}" 
+                            class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-bullhorn text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold">Announcement</h3>
+                                    <p class="text-sm opacity-90">Post an announcement</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Stats Overview -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-user-graduate text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm opacity-90">Total Students</p>
+                                    <h3 class="text-2xl font-bold">{{ total_students }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-chalkboard-teacher text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm opacity-90">Total Teachers</p>
+                                    <h3 class="text-2xl font-bold">{{ total_teachers }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-book text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm opacity-90">Active Courses</p>
+                                    <h3 class="text-2xl font-bold">{{ total_courses }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-md hover:shadow-xl p-6">
+                            <div class="flex items-center text-white">
+                                <div class="p-3 bg-blue-400 bg-opacity-30 rounded-lg">
+                                    <i class="fas fa-user-plus text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm opacity-90">New Enrollments</p>
+                                    <h3 class="text-2xl font-bold">{{ new_enrollments }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div class="chart-card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Enrollment Trends</h2>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="enrollmentChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Attendance Distribution</h2>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="attendanceChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Grade Distribution</h2> 
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="gradeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-900">Teacher Workload</h2>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="workloadChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <!-- Recent Enrollments -->
+                        <div class="dashboard-card">
+                            <div class="flex justify-between items-center mb-8">
+                                <h2 class="text-xl font-semibold text-gray-900">Recent Enrollments</h2>
+                                <a href="{% url 'school_app:enrollment_list' %}" 
+                                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-300 hover:scale-105">
+                                    View All
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
+                            </div>
+                            <div class="space-y-6">
+                                {% for enrollment in recent_enrollments %}
+                                <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-lg transition duration-300">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                        <span class="text-lg font-medium">{{ enrollment.student.name|first|upper }}</span>
+                                    </div>
+                                    <div class="ml-4 flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ enrollment.student.name }}</p>
+                                        <p class="text-sm text-gray-500">Enrolled in {{ enrollment.course.name }}</p>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ enrollment.enrollment_date|date:"M d" }}</span>
+                                </div>
+                                {% empty %}
+                                <p class="text-gray-500 text-center py-4">No recent enrollments</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Recent Announcements -->
+                        <div class="dashboard-card">
+                            <div class="flex justify-between items-center mb-8">
+                                <h2 class="text-xl font-semibold text-gray-900">Recent Announcements</h2>
+                                <a href="{% url 'school_app:announcement_list' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</a>
+                            </div>
+                            <div class="space-y-6">
+                                {% for announcement in recent_announcements %}
+                                <div class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-lg transition duration-300">
+                                    <h3 class="text-sm font-medium text-gray-900">{{ announcement.title }}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">{{ announcement.content|truncatewords:20 }}</p>
+                                    <div class="flex items-center mt-2">
+                                        <span class="text-xs text-gray-500">{{ announcement.created_at|timesince }} ago</span>
+                                        <span class="mx-2 text-gray-300">•</span>
+                                        <span class="text-xs font-medium px-2 py-1 rounded-full
+                                            {% if announcement.target_group == 'ALL' %}bg-blue-100 text-blue-800
+                                            {% elif announcement.target_group == 'STUDENTS' %}bg-green-100 text-green-800
+                                            {% elif announcement.target_group == 'TEACHERS' %}bg-purple-100 text-purple-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ announcement.get_target_group_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-gray-500 text-center py-4">No recent announcements</p>
+                        {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Calendar & Events) -->
+                <div class="space-y-8">
+                    <!-- Calendar Widget -->
+                    <div class="calendar-widget">
+                        <h2 class="text-xl font-semibold text-gray-900">Calendar</h2>
+                        <div id="calendar"></div>
+                    </div>
+
+                    <!-- Upcoming Events Widget -->
+                    <div class="upcoming-events">
+                        <h2 class="text-xl font-semibold mb-8 text-gray-900">Upcoming Events</h2>
+                        {% if upcoming_assignments %}
+                        <div class="mb-10">
+                            <h3 class="text-sm font-medium text-gray-900 mb-6 uppercase tracking-wider">Assignments Due</h3>
+                            {% for assignment in upcoming_assignments %}
+                            <div class="event-item">
+                                <span class="event-dot assignment"></span>
+                                <div class="event-content">
+                                    <div>{{ assignment.title }}</div>
+                                    <small>{{ assignment.course.name }}</small>
+                                </div>
+                                <span class="event-date">{{ assignment.due_date|date:"M d" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if upcoming_exams %}
+                        <div class="mb-10">
+                            <h3 class="text-sm font-medium text-gray-900 mb-6 uppercase tracking-wider">Upcoming Exams</h3>
+                            {% for exam in upcoming_exams %}
+                            <div class="event-item">
+                                <span class="event-dot exam"></span>
+                                <div class="event-content">
+                                    <div>Exam: {{ exam.course.name }}</div>
+                                </div>
+                                <span class="event-date">{{ exam.date|date:"M d" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if upcoming_events %}
+                        <div class="mb-10">
+                            <h3 class="text-sm font-medium text-gray-900 mb-6 uppercase tracking-wider">School Events</h3>
+                            {% for event in upcoming_events %}
+                            <div class="event-item">
+                                <span class="event-dot {{ event.event_type|lower }}"></span>
+                                <div class="event-content">
+                                    <div>{{ event.title }}</div>
+                                    {% if event.location %}
+                                    <small>{{ event.location }}</small>
+                                    {% endif %}
+                                </div>
+                                <span class="event-date">{{ event.start_date|date:"M d" }}</span>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if not upcoming_assignments and not upcoming_exams and not upcoming_events %}
+                        <div class="text-center py-10">
+                            <div class="text-gray-400 mb-4">
+                                <i class="fas fa-calendar-xmark text-5xl"></i>
+                            </div>
+                            <p class="text-gray-500">No upcoming events</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== DEFAULT DATA =====
+    // Default data with standard format for consistent fallback
+    const defaultEnrollmentData = [
+        { month: '2024-01', count: 42 },
+        { month: '2024-02', count: 38 },
+        { month: '2024-03', count: 55 },
+        { month: '2024-04', count: 47 },
+        { month: '2024-05', count: 63 },
+        { month: '2024-06', count: 58 }
+    ];
+
+    const defaultAttendanceData = [
+        { status: 'Present', count: 85 },
+        { status: 'Absent', count: 10 },
+        { status: 'Late', count: 5 }
+    ];
+
+    const defaultGradeData = [
+        { course__name: 'Mathematics', avg_score: 85 },
+        { course__name: 'Science', avg_score: 78 },
+        { course__name: 'History', avg_score: 82 },
+        { course__name: 'English', avg_score: 88 },
+        { course__name: 'Computer Science', avg_score: 92 }
+    ];
+
+    const defaultWorkloadData = [
+        { teacher__name: 'John Smith', course_count: 4 },
+        { teacher__name: 'Sarah Johnson', course_count: 5 },
+        { teacher__name: 'Michael Brown', course_count: 3 },
+        { teacher__name: 'Emily Davis', course_count: 6 },
+        { teacher__name: 'Robert Wilson', course_count: 2 }
+    ];
+
+    // ===== DATA PARSING WITH ROBUST ERROR HANDLING =====
+    function safeJsonParse(jsonString, defaultValue) {
+        if (!jsonString || jsonString === 'null' || jsonString === '') {
+            return defaultValue;
+        }
+        
+        try {
+            const parsed = JSON.parse(jsonString);
+            // Check if the result is an array and has items
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+            return defaultValue;
+        } catch (e) {
+            console.error('Error parsing JSON:', e);
+            return defaultValue;
+        }
+    }
+
+    // Parse Django context data with fallbacks
+    const enrollmentTrendsRaw = '{{ enrollment_trends|escapejs }}';
+    const attendanceStatsRaw = '{{ attendance_stats|escapejs }}';
+    const gradeDistributionRaw = '{{ grade_distribution|escapejs }}';
+    const teacherWorkloadRaw = '{{ teacher_workload|escapejs }}';
+    
+    const enrollmentData = safeJsonParse(enrollmentTrendsRaw, defaultEnrollmentData);
+    const attendanceData = safeJsonParse(attendanceStatsRaw, defaultAttendanceData);
+    const gradeData = safeJsonParse(gradeDistributionRaw, defaultGradeData);
+    const workloadData = safeJsonParse(teacherWorkloadRaw, defaultWorkloadData);
+
+    // ===== CHART CREATION FUNCTIONS =====
+    function createEnrollmentChart() {
+        const ctx = document.getElementById('enrollmentChart');
+        if (!ctx) return null;
+        
+        // Format dates for better display
+        const labels = enrollmentData.map(item => {
+            // Ensure proper date format by appending day component
+            const dateStr = item.month + '-01';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('default', { month: 'short', year: 'numeric' });
+            } catch (e) {
+                return item.month; // Fallback to raw month value
+            }
+        });
+        
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'New Enrollments',
+                    data: enrollmentData.map(item => item.count),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Enrollments: ' + context.raw;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Monthly Enrollment Trends',
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            bottom: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            stepSize: 10
+                        },
+                        grid: {
+                            display: true,
+                            drawBorder: false,
+                            color: 'rgba(200, 200, 200, 0.15)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Students',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                animations: {
+                    tension: {
+                        duration: 1000,
+                        easing: 'linear',
+                        from: 0.2,
+                        to: 0.4
+                    }
+                }
+            }
+        });
+    }
+
+    function createAttendanceChart() {
+        const ctx = document.getElementById('attendanceChart');
+        if (!ctx) return null;
+        
+        // Set consistent colors based on attendance status
+        const backgroundColors = attendanceData.map(item => {
+            if (item.status.toLowerCase().includes('present')) {
+                return 'rgb(34, 197, 94)';  // Green
+            } else if (item.status.toLowerCase().includes('absent')) {
+                return 'rgb(239, 68, 68)';  // Red
+            } else {
+                return 'rgb(234, 179, 8)';  // Yellow for 'Late' or others
+            }
+        });
+        
+        return new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: attendanceData.map(item => item.status),
+                datasets: [{
+                    data: attendanceData.map(item => item.count),
+                    backgroundColor: backgroundColors,
+                    borderColor: 'white',
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((acc, data) => acc + data, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Student Attendance Distribution',
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            bottom: 10
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+    }
+
+    function createGradeChart() {
+        const ctx = document.getElementById('gradeChart');
+        if (!ctx) return null;
+        
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: gradeData.map(item => item.course__name),
+                datasets: [{
+                    label: 'Average Score',
+                    data: gradeData.map(item => item.avg_score),
+                    backgroundColor: gradeData.map((_, index) => {
+                        // Generate a blue gradient with different opacity
+                        const opacity = 0.5 + (index * 0.1);
+                        return `rgba(59, 130, 246, ${opacity})`;
+                    }),
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return `Average: ${context.raw.toFixed(1)}%`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Average Grades by Course',
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            bottom: 20
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            display: true,
+                            drawBorder: false,
+                            color: 'rgba(200, 200, 200, 0.15)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Average Score (%)',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                animations: {
+                    y: {
+                        duration: 1000,
+                        easing: 'easeOutQuad'
+                    }
+                }
+            }
+        });
+    }
+
+    function createWorkloadChart() {
+        const ctx = document.getElementById('workloadChart');
+        if (!ctx) return null;
+        
+        // Sort by course count for better visualization
+        const sortedData = [...workloadData].sort((a, b) => a.course_count - b.course_count);
+        
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sortedData.map(item => item.teacher__name),
+                datasets: [{
+                    label: 'Number of Courses',
+                    data: sortedData.map(item => item.course_count),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const count = context.raw;
+                                return `${count} course${count !== 1 ? 's' : ''}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Teacher Course Load',
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            bottom: 20
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            stepSize: 1
+                        },
+                        grid: {
+                            display: true,
+                            drawBorder: false,
+                            color: 'rgba(200, 200, 200, 0.15)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Courses',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                animations: {
+                    x: {
+                        duration: 1000,
+                        easing: 'easeOutQuad'
+                    }
+                }
+            }
+        });
+    }
+
+    // ===== INITIALIZE CHARTS =====
+    // Create all charts with initialization function
+    try {
+        const enrollmentChart = createEnrollmentChart();
+        const attendanceChart = createAttendanceChart();
+        const gradeChart = createGradeChart();
+        const workloadChart = createWorkloadChart();
+        
+        // Log initialization info
+        console.log('Charts initialized successfully:', {
+            enrollment: !!enrollmentChart,
+            attendance: !!attendanceChart,
+            grade: !!gradeChart,
+            workload: !!workloadChart
+        });
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+    }
+
+    // ===== CALENDAR INITIALIZATION =====
+    const calendarEl = document.getElementById('calendar');
+    if (calendarEl) {
+        try {
+            const calendarEvents = safeJsonParse('{{ calendar_events|escapejs }}', []);
+            
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: '',
+                    center: 'title',
+                    right: 'prev,next'
+                },
+                height: 'auto',
+                events: calendarEvents,
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                        info.jsEvent.preventDefault();
+                    }
+                },
+                eventClassNames: function(arg) {
+                    return ['fc-event-' + arg.event.extendedProps.type || ''];
+                },
+                eventContent: function(arg) {
+                    let timeText = '';
+                    if (arg.event.allDay) {
+                        timeText = 'All day';
+                    } else if (arg.event.start) {
+                        timeText = arg.event.start.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                    
+                    return {
+                        html: `
+                        <div class="fc-event-main-content">
+                            <div class="fc-event-title-container">
+                                <div class="fc-event-title">${arg.event.title}</div>
+                            </div>
+                            ${timeText ? `<div class="fc-event-time">${timeText}</div>` : ''}
+                        </div>
+                        `
+                    };
+                }
+            });
+            calendar.render();
+        } catch (error) {
+            console.error('Error initializing calendar:', error);
+            
+            // Show error message in calendar container
+            calendarEl.innerHTML = `
+                <div class="text-center py-10">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-calendar-xmark text-3xl"></i>
+                    </div>
+                    <p class="text-gray-500">Could not load calendar data</p>
+                </div>
+            `;
+        }
+    }
+
+    // ===== NOTIFICATION DROPDOWN =====
+    const notificationButton = document.getElementById('notificationButton');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    
+    if (notificationButton && notificationDropdown) {
+        notificationButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            notificationDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!notificationButton.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

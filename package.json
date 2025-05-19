@@ -1,0 +1,13 @@
+{
+  "name": "school-management",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tailwindcss -i ./school_management/backend/school_app/static/css/tailwind.css -o ./school_management/backend/school_app/static/css/tailwind-built.css",
+    "watch": "tailwindcss -i ./school_management/backend/school_app/static/css/tailwind.css -o ./school_management/backend/school_app/static/css/tailwind-built.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.3",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.29"
+  }
+}

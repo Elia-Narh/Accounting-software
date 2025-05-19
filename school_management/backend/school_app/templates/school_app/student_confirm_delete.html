@@ -1,0 +1,25 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-2xl font-bold mb-6 text-red-600">Confirm Deletion</h2>
+        
+        <p class="mb-6 text-gray-700">
+            Are you sure you want to delete the student "{{ student.name }}"? This action cannot be undone.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Delete Student
+                </button>
+                <a href="{% url 'school_app:student_list' %}" class="text-blue-500 hover:text-blue-800">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

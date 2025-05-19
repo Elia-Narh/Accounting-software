@@ -1,0 +1,42 @@
+{% extends "school_app/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 min-w-0">
+        <div class="p-6 md:p-8 lg:p-10">
+            <div class="max-w-md mx-auto w-full space-y-8">
+                <div>
+                    <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                        Delete Enrollment
+                    </h2>
+                    <p class="mt-2 text-center text-sm text-gray-600">
+                        Are you sure you want to delete the enrollment of "{{ enrollment.student.name }}" in "{{ enrollment.course.name }}"?
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-600">
+                        This action cannot be undone.
+                    </p>
+                </div>
+
+                <form class="mt-8 space-y-6" method="POST">
+                    {% csrf_token %}
+                    <div class="flex items-center justify-between space-x-4">
+                        <button type="submit"
+                            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Yes, Delete Enrollment
+                        </button>
+                        <a href="{% url 'school_app:enrollment_list' %}"
+                            class="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

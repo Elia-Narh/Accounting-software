@@ -1,0 +1,59 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">Announcements</h1>
+                {% if user.is_staff %}
+                <a href="{% url 'school_app:announcement_create' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    <i class="fas fa-plus mr-2"></i>New Announcement
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="space-y-6">
+                {% for announcement in announcements %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900">{{ announcement.title }}</h2>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Posted by {{ announcement.created_by.get_full_name|default:announcement.created_by.username }}
+                                    on {{ announcement.created_at|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if announcement.target_group == 'ALL' %}bg-blue-100 text-blue-800
+                                {% elif announcement.target_group == 'STUDENTS' %}bg-green-100 text-green-800
+                                {% elif announcement.target_group == 'TEACHERS' %}bg-purple-100 text-purple-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ announcement.get_target_group_display }}
+                            </span>
+                        </div>
+                        <div class="mt-4 text-gray-700">
+                            {{ announcement.content|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+                    No announcements found.
+                    {% if user.is_staff %}
+                    <a href="{% url 'school_app:announcement_create' %}" class="text-blue-500 hover:text-blue-700">
+                        Create your first announcement
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

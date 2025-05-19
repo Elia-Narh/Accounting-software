@@ -1,0 +1,47 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Grade Management</h1>
+    
+    <div class="mb-4">
+        <a href="{% url 'school_app:grade_create' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Add New Grade
+        </a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for grade in grades %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ grade.student.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ grade.course.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ grade.score }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ grade.date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="{% url 'school_app:grade_update' grade.pk %}" class="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                        <a href="{% url 'school_app:grade_delete' grade.pk %}" class="text-red-600 hover:text-red-900">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        No grades found. Add a new grade to get started.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

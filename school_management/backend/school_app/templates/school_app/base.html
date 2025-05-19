@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+</head>
+<body class="bg-gray-100">
+    <!-- Top Navigation -->
+    <nav class="bg-gray-800 shadow fixed w-full z-50">
+        <div class="max-w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'school_app:dashboard' %}" class="text-xl font-bold text-white">
+                            School Management
+                        </a>
+                    </div>
+                    <!-- Search Bar -->
+                    <div class="ml-6 flex items-center">
+                        <form action="{% url 'school_app:search' %}" method="GET" class="flex items-center">
+                            <div class="relative">
+                                <input type="text" name="q" placeholder="Search..." 
+                                    class="bg-gray-700 text-white rounded-full py-2 pl-4 pr-10 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value="{{ request.GET.q }}">
+                                <button type="submit" class="absolute right-3 top-2.5 text-gray-400 hover:text-white" title="Search">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <!-- Notification Bell -->
+                        <div class="relative">
+                            <a href="{% url 'school_app:notification_list' %}" class="text-gray-300 hover:text-white">
+                                <i class="fas fa-bell"></i>
+                                {% if unread_notifications_count > 0 %}
+                                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                    {{ unread_notifications_count }}
+                                </span>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-gray-300">Welcome, {{ user.username }}</span>
+                            {% if user.is_superuser %}
+                            <a href="{% url 'school_app:create_admin' %}" class="ml-4 text-gray-300 hover:text-white">Create Admin</a>
+                            {% endif %}
+                            <a href="{% url 'school_app:logout' %}" class="ml-4 text-gray-300 hover:text-white">Logout</a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'school_app:login' %}" class="text-gray-300 hover:text-white">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="fixed top-16 left-0 right-0 z-50">
+        {% for message in messages %}
+        <div class="p-4 {% if message.tags == 'error' %}bg-red-50 text-red-700{% elif message.tags == 'success' %}bg-green-50 text-green-700{% else %}bg-blue-50 text-blue-700{% endif %} shadow-md">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex min-h-screen pt-16">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-white shadow mt-8">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-500 text-sm">
+                &copy; 2025 School Management System
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,152 @@
+{% extends 'school_app/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Search Results</h1>
+        {% if query %}
+        <p class="mt-2 text-gray-600">Showing results for "{{ query }}"</p>
+        {% endif %}
+    </div>
+
+    {% if not query %}
+    <div class="text-center py-12">
+        <div class="text-gray-400 mb-4">
+            <i class="fas fa-search text-6xl"></i>
+        </div>
+        <h2 class="text-xl font-medium text-gray-900">Enter a search term</h2>
+        <p class="mt-2 text-gray-600">Use the search bar above to find students, teachers, courses, or announcements</p>
+    </div>
+    {% else %}
+        {% if not results.students and not results.teachers and not results.courses and not results.announcements %}
+        <div class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <i class="fas fa-search text-6xl"></i>
+            </div>
+            <h2 class="text-xl font-medium text-gray-900">No results found</h2>
+            <p class="mt-2 text-gray-600">Try searching with different keywords</p>
+        </div>
+        {% else %}
+            <!-- Students Section -->
+            {% if results.students %}
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Students</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        {% for student in results.students %}
+                        <li>
+                            <a href="{% url 'school_app:student_detail' student.id %}" class="block hover:bg-gray-50">
+                                <div class="px-4 py-4 sm:px-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                <span class="text-blue-600 font-medium">{{ student.name|first|upper }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-blue-600">{{ student.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ student.email }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Teachers Section -->
+            {% if results.teachers %}
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Teachers</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        {% for teacher in results.teachers %}
+                        <li>
+                            <a href="{% url 'school_app:teacher_detail' teacher.id %}" class="block hover:bg-gray-50">
+                                <div class="px-4 py-4 sm:px-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                                                <span class="text-purple-600 font-medium">{{ teacher.name|first|upper }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-purple-600">{{ teacher.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ teacher.subject_specialty }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Courses Section -->
+            {% if results.courses %}
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Courses</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        {% for course in results.courses %}
+                        <li>
+                            <a href="{% url 'school_app:course_detail' course.id %}" class="block hover:bg-gray-50">
+                                <div class="px-4 py-4 sm:px-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                                <i class="fas fa-book text-green-600"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-green-600">{{ course.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ course.teacher.name }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Announcements Section -->
+            {% if results.announcements %}
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Announcements</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        {% for announcement in results.announcements %}
+                        <li>
+                            <a href="{% url 'school_app:announcement_detail' announcement.id %}" class="block hover:bg-gray-50">
+                                <div class="px-4 py-4 sm:px-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                                                <i class="fas fa-bullhorn text-amber-600"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-amber-600">{{ announcement.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ announcement.created_at|date:"M d, Y" }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %} 

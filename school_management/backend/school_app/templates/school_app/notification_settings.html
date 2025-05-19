@@ -1,0 +1,102 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-3xl mx-auto">
+                <h1 class="text-3xl font-bold mb-8">Notification Settings</h1>
+
+                <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                    <form method="post" class="p-6 space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Notification Methods -->
+                        <div>
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Notification Methods</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="email_notifications" name="email_notifications"
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        {% if settings.email_notifications %}checked{% endif %}>
+                                    <label for="email_notifications" class="ml-2 block text-sm text-gray-900">
+                                        Email Notifications
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="sms_notifications" name="sms_notifications"
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        {% if settings.sms_notifications %}checked{% endif %}>
+                                    <label for="sms_notifications" class="ml-2 block text-sm text-gray-900">
+                                        SMS Notifications
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="push_notifications" name="push_notifications"
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        {% if settings.push_notifications %}checked{% endif %}>
+                                    <label for="push_notifications" class="ml-2 block text-sm text-gray-900">
+                                        Push Notifications
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div>
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                    <input type="email" name="email" id="email"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        value="{{ settings.email|default:'' }}">
+                                </div>
+                                <div>
+                                    <label for="phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                    <input type="tel" name="phone_number" id="phone_number"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        value="{{ settings.phone_number|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quiet Hours -->
+                        <div>
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Quiet Hours</h2>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="quiet_hours_start" class="block text-sm font-medium text-gray-700">Start Time</label>
+                                    <input type="time" name="quiet_hours_start" id="quiet_hours_start"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        value="{{ settings.quiet_hours_start|time|default:'' }}">
+                                </div>
+                                <div>
+                                    <label for="quiet_hours_end" class="block text-sm font-medium text-gray-700">End Time</label>
+                                    <input type="time" name="quiet_hours_end" id="quiet_hours_end"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        value="{{ settings.quiet_hours_end|time|default:'' }}">
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">During quiet hours, you will only receive critical notifications.</p>
+                        </div>
+
+                        <div class="pt-5">
+                            <div class="flex justify-end">
+                                <button type="submit"
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

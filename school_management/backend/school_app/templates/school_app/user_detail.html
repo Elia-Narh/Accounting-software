@@ -1,0 +1,147 @@
+{% extends "school_app/base.html" %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'school_app/sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-bold">User Details</h1>
+                    <div class="space-x-4">
+                        <a href="{% url 'school_app:user_update' user.id %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-edit mr-2"></i>Edit User
+                        </a>
+                        {% if not user.is_superuser %}
+                        <a href="{% url 'school_app:user_delete' user.id %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-trash mr-2"></i>Delete User
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- User Profile Card -->
+                <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+                    <div class="p-6">
+                        <div class="flex items-center mb-6">
+                            <div class="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-3xl font-medium text-gray-700">{{ user.first_name|first|upper }}</span>
+                            </div>
+                            <div class="ml-6">
+                                <h2 class="text-2xl font-bold text-gray-900">{{ user.get_full_name }}</h2>
+                                <p class="text-gray-600">{{ user.email }}</p>
+                                <div class="mt-2">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if user.is_superuser %}bg-purple-100 text-purple-800
+                                        {% elif user.is_staff %}bg-blue-100 text-blue-800
+                                        {% else %}bg-green-100 text-green-800{% endif %}">
+                                        {% if user.is_superuser %}Admin
+                                        {% elif user.is_staff %}Staff
+                                        {% else %}Teacher{% endif %}
+                                    </span>
+                                    <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Account Information</h3>
+                                <dl class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <dt class="text-gray-500">Username</dt>
+                                        <dd class="text-gray-900">{{ user.username }}</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-gray-500">Date Joined</dt>
+                                        <dd class="text-gray-900">{{ user.date_joined|date:"M d, Y" }}</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-gray-500">Last Login</dt>
+                                        <dd class="text-gray-900">{{ user.last_login|date:"M d, Y H:i" }}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Permissions</h3>
+                                <dl class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <dt class="text-gray-500">Staff Status</dt>
+                                        <dd>
+                                            {% if user.is_staff %}
+                                            <span class="text-green-600"><i class="fas fa-check"></i></span>
+                                            {% else %}
+                                            <span class="text-red-600"><i class="fas fa-times"></i></span>
+                                            {% endif %}
+                                        </dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-gray-500">Superuser Status</dt>
+                                        <dd>
+                                            {% if user.is_superuser %}
+                                            <span class="text-green-600"><i class="fas fa-check"></i></span>
+                                            {% else %}
+                                            <span class="text-red-600"><i class="fas fa-times"></i></span>
+                                            {% endif %}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <!-- Groups and Permissions -->
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold mb-4">Groups & Permissions</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="text-md font-medium mb-2">Groups</h4>
+                                    <div class="bg-gray-50 rounded-md p-4">
+                                        {% if user.groups.all %}
+                                        <ul class="list-disc list-inside">
+                                            {% for group in user.groups.all %}
+                                            <li class="text-gray-700">{{ group.name }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% else %}
+                                        <p class="text-gray-500">No groups assigned</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-md font-medium mb-2">User Permissions</h4>
+                                    <div class="bg-gray-50 rounded-md p-4 max-h-40 overflow-y-auto">
+                                        {% if user.user_permissions.all %}
+                                        <ul class="list-disc list-inside">
+                                            {% for permission in user.user_permissions.all %}
+                                            <li class="text-gray-700">{{ permission.name }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% else %}
+                                        <p class="text-gray-500">No specific permissions assigned</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back Button -->
+                <div class="mt-6">
+                    <a href="{% url 'school_app:user_list' %}" class="text-blue-500 hover:text-blue-800">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to User List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,46 @@
+{% extends "school_app/base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Payment{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-lg mx-auto">
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-bold mb-6">{{ action }} Payment</h2>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ field.label }}
+                        </label>
+                        <div class="mt-1">
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ field.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button type="submit"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        {{ action }} Payment
+                    </button>
+                    <a href="{% url 'school_app:fee_list' %}"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

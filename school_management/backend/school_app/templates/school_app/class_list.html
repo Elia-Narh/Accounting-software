@@ -1,0 +1,32 @@
+{% extends 'school_app/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Enrollment List</h2>
+    <a href="{% url 'enrollment_create' %}" class="btn btn-primary mb-3">Create New Enrollment</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Course</th>
+                <th>Enrollment Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.student }}</td>
+                <td>{{ enrollment.course }}</td>
+                <td>{{ enrollment.enrollment_date }}</td>
+                <td>
+                    <a href="{% url 'enrollment_update' enrollment.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'enrollment_delete' enrollment.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
